@@ -1,0 +1,127 @@
+// Koda Flashcard App - Simplified Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MANAGEMENT - REMOVED FOR OPEN ACCESS
+// ============================================================================
+
+// User table removed - app now works without authentication
+
+// ============================================================================
+// DECK MANAGEMENT
+// ============================================================================
+
+model Deck {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // Deck Configuration
+  isPublic    Boolean  @default(false)
+  tags        String   @default("")
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  cards         Card[]
+  studySessions StudySession[]
+  
+  @@map("decks")
+}
+
+// ============================================================================
+// FLASHCARD MANAGEMENT
+// ============================================================================
+
+model Card {
+  id       String @id @default(cuid())
+  deckId   String
+  
+  // Card Content
+  front    String
+  back     String
+  hint     String?
+  
+  // Card Type and Metadata
+  type        String   @default("basic") // "basic", "cloze", "reverse"
+  tags        String   @default("")
+  difficulty  Float    @default(0.5)
+  
+  // Spaced Repetition Data
+  stage              String   @default("new") // "new", "learning", "review", "mastered"
+  interval           Float    @default(1.0)
+  easeFactor         Float    @default(2.5)
+  nextReviewAt       DateTime @default(now())
+  reviewCount        Int      @default(0)
+  consecutiveCorrect Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  deck          Deck            @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  reviewHistory ReviewHistory[]
+  
+  @@map("cards")
+}
+
+// ============================================================================
+// STUDY SESSIONS & TRACKING
+// ============================================================================
+
+model StudySession {
+  id       String @id @default(cuid())
+  deckId   String
+  
+  // Session Configuration
+  sessionType    String   // "review", "learn", "mixed"
+  
+  // Session Statistics
+  cardsStudied   Int      @default(0)
+  cardsCorrect   Int      @default(0)
+  totalTime      Int      @default(0) // in seconds
+  
+  // Timing
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  
+  // Relationships
+  deck          Deck            @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  reviewHistory ReviewHistory[]
+  
+  @@map("study_sessions")
+}
+
+// Review history for tracking all card interactions
+model ReviewHistory {
+  id               String   @id @default(cuid())
+  cardId           String
+  sessionId        String?
+  
+  // Review Data
+  quality          Int      // 0-5 quality rating
+  responseTime     Int      // Response time in milliseconds
+  wasCorrect       Boolean
+  
+  // Algorithm State
+  intervalBefore   Float
+  intervalAfter    Float
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  
+  // Relationships
+  card         Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  studySession StudySession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  
+  @@map("review_history")
+}
