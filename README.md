@@ -2,6 +2,13 @@
 
 A minimalistic flashcard application with spaced repetition, featuring Koda the bear as your study companion. Works entirely in demo mode with localStorage - no backend required for local use.
 
+## Screenshots
+
+![](./client/public/1.png)
+![](./client/public/2.png)
+![](./client/public/3.png)
+![](./client/public/4.png)
+
 ## ✨ Features
 
 - **Smart Spaced Repetition**: Custom algorithm that adapts to learning patterns
